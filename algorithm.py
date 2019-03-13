@@ -2,9 +2,6 @@
 from config import *
 
 
-# Example:
-# x' = x^2 - xt + yt - x
-# y' = -y^2 - t^2 - xy - xt - yt - y
 
 
 class Algorithm:
@@ -33,8 +30,7 @@ class Algorithm:
         for i in range(ITERATIONS):
             # Calculate x' and y'
             try:
-                x = x ** 2 - x * self.t + y * self.t - x
-                y = -y ** 2 - self.t ** 2 - x * y - x * self.t - y * self.t - y
+                x, y = self.equation(x, y)
             except OverflowError:
                 self.t = TIME_INCREMENT
                 x, y = self.t, self.t
@@ -43,6 +39,14 @@ class Algorithm:
             points.append((x, y))
         
         return points
+        
+    # Example:
+    # x' = x^2 - xt + yt - x
+    # y' = -y^2 - t^2 - xy - xt - yt - y
+    def equation(self, x, y):
+        x = x ** 2 - x * self.t + y * self.t - x
+        y = -y ** 2 - self.t ** 2 - x * y - x * self.t - y * self.t - y
+        return x, y
 
     def reset(self):
         self.t = TIME_DEFAULT
