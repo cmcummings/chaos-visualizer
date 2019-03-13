@@ -1,76 +1,109 @@
 # display.py
 from config import *
-from utils import random_color
+from utils import random_color, random_grayscale, round_to_place, color_sequence
 import pygame
 
 class Visualizer:
     """Handles visualization of the equation."""
 
-    colors = [random_color() for i in range(ITERATIONS)]
 
-    def __init__(self, x_min, x_max):
+    def __init__(self):
         # Graph variables
-        self.x_res, self.y_res = WIDTH, HEIGHT
-        self.x_min, self.x_max = x_min, x_max
-        self.y_min, self.y_max = 0, 0
-
-        self.x_scl, self.y_scl = 1, 1 # Zoom
+        self.x_offset, self.y_offset = WIDTH/2, HEIGHT/2
+        self.x_zoom, self.y_zoom = 400, 400
+        self.colors = color_sequence(ITERATIONS)
 
         # Initialize screen
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
+        self.font = pygame.font.Font(None, 20)
 
         # Initialize points list
         self.points = [] 
+        self.trails = []
         self.prev_points = []
 
     def update_points(self, points):
         """Creates a new Point object for each point, calculates where it should be on the screen, 
            and adds it to the points array."""
-        # screen_x, screen_y = self.calc_screen_pos(x, y)
-        # Move the current points to previous points
+        # Reset points array
         self.prev_points = self.points
         self.points = []
-        
+
+        # Move the current points to previous points
         for i, point in enumerate(points):
-            x, y = point[0], point[1]
-            self.points.append(Point(int(x*400+WIDTH/2), int(y*400+2*HEIGHT/3), self.colors[i]))
+            x = point[0] * self.x_zoom + self.x_offset
+            y = point[1] * self.y_zoom + self.y_offset
+            obj = Point(int(x), int(y), self.colors[i])
+            self.points.append(obj)
+
 
     def tick(self):
         self.logic()
-        self.draw()
+        self.clear()
         for point in self.points:
             point.tick(self.screen)
 
     def logic(self):
-        for point in self.points:
-            # Remove points from the array that are not being seen
-            if point.pixel.get_alpha() <= 0: 
-                self.points.remove(point)
 
-    def draw(self):
+        # Key handling
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_UP] != 0:
+            self.zoom_in()
+        if pressed[pygame.K_DOWN] != 0:
+            self.zoom_out()
+        if pressed[pygame.K_w] != 0:
+            self.move(0, MOVE_SPEED)
+        if pressed[pygame.K_s] != 0:    
+            self.move(0, -MOVE_SPEED)
+        if pressed[pygame.K_a] != 0:    
+            self.move(MOVE_SPEED, 0)
+        if pressed[pygame.K_d] != 0:    
+            self.move(-MOVE_SPEED, 0)
+
+    def clear(self):
         self.screen.fill(pygame.Color(0, 0, 0)) # Clear the screen
+    
+    def draw_t(self, t):
+        # Draw the UI
+        text = self.font.render("t = " + str(round_to_place(t, 100000)), True, (255, 255, 255))
+        self.screen.blit(text, (WIDTH-text.get_width()-10, text.get_height()))
 
-        # Draw the trails
-        for i in range(len(self.prev_points)):
-            point = self.points[i]
-            prev_point = self.prev_points[i]
+    def draw_speed(self, speed_scl):
+        text = "||"
+        if speed_scl > 0:
+            text =  ">" * speed_scl 
+        elif speed_scl < 0:
+            text = "<" * abs(speed_scl)
 
-            pygame.draw.line(self.screen, point.color, (point.x, point.y), (prev_point.x, prev_point.y))
+        text = self.font.render(text, True, (255, 255, 255))
+        self.screen.blit(text, (WIDTH-text.get_width()-10, text.get_height()+20))
 
-    def calc_screen_pos(self, x, y):
-        """Converts the coordinates of a point to coordinates on the screen."""
-        pass
+    def zoom_in(self):
+        self.x_zoom = min(5000, self.x_zoom + ZOOM_RATE)
+        self.y_zoom = min(5000, self.y_zoom + ZOOM_RATE)
+
+    def zoom_out(self):
+        self.x_zoom = max(100, self.x_zoom - ZOOM_RATE)
+        self.y_zoom = max(100, self.y_zoom - ZOOM_RATE)
+
+    def move(self, left, up):
+        self.x_offset += left
+        self.y_offset += up
+
 
 class Point:
     """A visualized point."""
 
     fade_rate = 15 # How much the transparency of a point is reduced per tick
 
-    def __init__(self, x, y, color):
-        self.color = color
+    def __init__(self, x, y, color=None):
+        if color is None:
+            self.color = random_grayscale()
+        else:
+            self.color = color
         self.pixel = pygame.Surface((1, 1))
         self.pixel.set_alpha(255)
-        self.pixel.fill(color)  
+        self.pixel.fill(self.color) 
         self.x, self.y = x, y
 
     def tick(self, screen):
@@ -78,10 +111,10 @@ class Point:
         self.draw(screen)
 
     def logic(self):
-        alpha = self.pixel.get_alpha()
-        new_alpha = alpha - self.fade_rate
-        if new_alpha >= 0:
-            self.pixel.set_alpha(new_alpha) # Fade the pixel
+        pass
 
     def draw(self, screen):
-        screen.blit(self.pixel, (self.x, self.y))
+        try:
+            screen.blit(self.pixel, (self.x, self.y))
+        except TypeError:
+            print("Error drawing... resetting algorithm.")

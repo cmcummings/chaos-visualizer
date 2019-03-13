@@ -10,9 +10,9 @@ from config import *
 class Algorithm:
     """Handles computation of the equation."""
 
-    time_increment = 0.00001
+    time_increment = TIME_INCREMENT
 
-    def __init__(self, t=0):
+    def __init__(self, t=TIME_DEFAULT):
         self.t = t
 
     def advance(self):
@@ -32,9 +32,17 @@ class Algorithm:
         # Calculate
         for i in range(ITERATIONS):
             # Calculate x' and y'
-            x = x ** 2 - x * self.t + y * self.t - x
-            y = -y ** 2 - self.t ** 2 - x * y - x * self.t - y * self.t - y
+            try:
+                x = x ** 2 - x * self.t + y * self.t - x
+                y = -y ** 2 - self.t ** 2 - x * y - x * self.t - y * self.t - y
+            except OverflowError:
+                self.t = TIME_INCREMENT
+                x, y = self.t, self.t
+
             # Save the point
             points.append((x, y))
         
         return points
+
+    def reset(self):
+        self.t = TIME_DEFAULT
