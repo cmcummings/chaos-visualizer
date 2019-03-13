@@ -61,8 +61,7 @@ class Main:
         if pressed[pygame.K_RIGHT] != 0:
             if pygame.K_RIGHT in self.released:
                 if self.released[pygame.K_RIGHT]:
-                    self.speed_scl = min(4, self.speed_scl + 1)
-                    self.algorithm.time_increment = SPEEDS[self.speed_scl]
+                    self.speed_up()
                     self.released[pygame.K_RIGHT] = False
         elif pressed[pygame.K_RIGHT] == 0:
             self.released[pygame.K_RIGHT] = True
@@ -71,8 +70,7 @@ class Main:
         if pressed[pygame.K_LEFT] != 0:
             if pygame.K_LEFT in self.released:
                 if self.released[pygame.K_LEFT]:
-                    self.speed_scl = max(-4, self.speed_scl - 1)
-                    self.algorithm.time_increment = SPEEDS[self.speed_scl]
+                    self.slow_down()
                     self.released[pygame.K_LEFT] = False
         elif pressed[pygame.K_LEFT] == 0:
             self.released[pygame.K_LEFT] = True
@@ -83,8 +81,15 @@ class Main:
 
         # Pause
         if pressed[pygame.K_SPACE] != 0:
-            self.speed_scl = 0
-            self.algorithm.time_increment = SPEEDS[self.speed_scl]
+            if pygame.K_SPACE in self.released:
+                if self.released[pygame.K_SPACE]:
+                    if self.speed_scl != 0:
+                        self.stop()
+                    else:
+                        self.default_speed()
+                self.released[pygame.K_SPACE] = False
+        elif pressed[pygame.K_SPACE] == 0:
+            self.released[pygame.K_SPACE] = True
             
         
         # Advance the algorithm
@@ -98,7 +103,21 @@ class Main:
 
         pygame.display.flip() # Buffer
         
+    def slow_down(self):
+        self.speed_scl = max(-4, self.speed_scl - 1)
+        self.algorithm.time_increment = SPEEDS[self.speed_scl]
 
+    def speed_up(self):
+        self.speed_scl = min(4, self.speed_scl + 1)
+        self.algorithm.time_increment = SPEEDS[self.speed_scl]
+
+    def stop(self):
+        self.speed_scl = 0
+        self.algorithm.time_increment = SPEEDS[self.speed_scl]
+    
+    def default_speed(self):
+        self.speed_scl = 1
+        self.algorithm.time_increment = SPEEDS[self.speed_scl]
 
 if __name__ == "__main__":
     Main()

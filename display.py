@@ -8,6 +8,7 @@ class Visualizer:
 
 
     def __init__(self):
+
         # Graph variables
         self.x_offset, self.y_offset = WIDTH/2, HEIGHT/2
         self.x_zoom, self.y_zoom = 400, 400
@@ -15,6 +16,7 @@ class Visualizer:
 
         # Initialize screen
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
+        pygame.display.set_caption("Chaos Visualizer")
         self.font = pygame.font.Font(None, 20)
 
         # Initialize points list
@@ -44,7 +46,6 @@ class Visualizer:
             point.tick(self.screen)
 
     def logic(self):
-
         # Key handling
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_UP] != 0:
@@ -64,11 +65,13 @@ class Visualizer:
         self.screen.fill(pygame.Color(0, 0, 0)) # Clear the screen
     
     def draw_t(self, t):
+        """Draws the time counter."""
         # Draw the UI
         text = self.font.render("t = " + str(round_to_place(t, 100000)), True, (255, 255, 255))
         self.screen.blit(text, (WIDTH-text.get_width()-10, text.get_height()))
 
     def draw_speed(self, speed_scl):
+        """Draws the speed level."""
         text = "||"
         if speed_scl > 0:
             text =  ">" * speed_scl 
@@ -87,6 +90,7 @@ class Visualizer:
         self.y_zoom = max(100, self.y_zoom - ZOOM_RATE)
 
     def move(self, left, up):
+        """Moves the focus."""
         self.x_offset += left
         self.y_offset += up
 
